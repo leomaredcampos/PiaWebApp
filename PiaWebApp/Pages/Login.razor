@@ -1,0 +1,233 @@
+﻿@page "/Login"
+@using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+@using Microsoft.EntityFrameworkCore
+@using PiaWebApp.Auth
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@inject PiaWebApp.Data.ApplicationDbContext DbContext
+@inject ILogger<Login> Logger
+
+<div class="login-container">
+    <img src="/image/logo.png" class="logo" alt="Store Logo" />
+    <div class="code-label">Code</div>
+    <input type="text"
+           @bind="storeCode"
+           @bind:event="oninput"
+           class="code-input @(IsInvalid ? "invalid" : "")"
+           @onkeypress="HandleKeyPress"
+           placeholder="Enter your code"
+           autofocus />
+
+    <button @onclick="HandleLogin"
+            class="enter-button"
+            disabled="@(string.IsNullOrWhiteSpace(storeCode) || isLoading)">
+        @if (isLoading)
+        {
+            <span class="spinner"></span>
+        }
+        else
+        {
+            <span>Enter</span>
+        }
+    </button>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="error-message">
+            <i class="fas fa-exclamation-circle"></i> @errorMessage
+        </div>
+    }
+</div>
+
+@code {
+    private string storeCode = "";
+    private string errorMessage = "";
+    private bool isLoading = false;
+    private bool IsInvalid => !string.IsNullOrEmpty(errorMessage);
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if already authenticated
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated ?? false)
+        {
+            Navigation.NavigateTo("/promos");
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        if (isLoading) return;
+
+        isLoading = true;
+        errorMessage = "";
+        StateHasChanged(); // Force UI update to show loading state
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(storeCode))
+            {
+                errorMessage = "Please enter a store code";
+                return;
+            }
+
+            // Normalize the store code (trim and uppercase)
+            storeCode = storeCode.Trim().ToUpper();
+
+            Logger.LogInformation($"Attempting login for store code: {storeCode}");
+
+            var store = await DbContext.Accesstbl
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.storez == storeCode);
+
+            if (store == null)
+            {
+                errorMessage = "Invalid store code. Please try again.";
+                Logger.LogWarning($"Invalid store code attempt: {storeCode}");
+                return;
+            }
+
+            if (AuthStateProvider is CustomAuthStateProvider customAuthProvider)
+            {
+                Logger.LogInformation($"Successful login for store: {storeCode}");
+                await customAuthProvider.MarkUserAsAuthenticated(store.storez, store.sdescription);
+
+                // Small delay to ensure state is updated before navigation
+                await Task.Delay(100);
+                Navigation.NavigateTo("/promos", forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Login failed. Please try again later.";
+            Logger.LogError(ex, $"Login error for store {storeCode}: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await HandleLogin();
+        }
+    }
+}
+
+<style>
+    .login-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-color: #f5f5f5;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .logo {
+        width: min(300px, 80%);
+        height: auto;
+        margin-bottom: 30px;
+    }
+
+    .code-label {
+        font-size: 24px;
+        margin-bottom: 10px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .code-input {
+        width: 250px;
+        height: 45px;
+        padding: 5px 15px;
+        font-size: 18px;
+        text-align: center;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        transition: border-color 0.3s;
+    }
+
+        .code-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        .code-input.invalid {
+            border-color: #dc3545;
+        }
+
+    .enter-button {
+        width: 250px;
+        height: 45px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 18px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .enter-button:hover {
+            background-color: #0069d9;
+        }
+
+        .enter-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+    .error-message {
+        color: #dc3545;
+        margin-top: 15px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .login-container {
+            padding: 10px;
+        }
+
+        .logo {
+            margin-bottom: 20px;
+        }
+
+        .code-input, .enter-button {
+            width: 90%;
+            max-width: 300px;
+        }
+    }
+</style>

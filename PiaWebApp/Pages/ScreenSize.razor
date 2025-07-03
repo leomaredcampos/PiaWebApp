@@ -1,0 +1,143 @@
+﻿@page "/screen-size"
+@implements IDisposable
+@inject IJSRuntime JS
+
+<div class="screen-size-container">
+    <h3 class="text-center mb-4">Screen Size Detector</h3>
+
+    @if (isLoading)
+    {
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Detecting your screen resolution...</p>
+        </div>
+    }
+    else if (hasError)
+    {
+        <div class="alert alert-danger">
+            <strong>Error:</strong> @errorMessage
+        </div>
+    }
+    else
+    {
+        <div class="result-card">
+            <div class="size-display">
+                <span class="dimension">@width</span> × <span class="dimension">@height</span>
+            </div>
+            <div class="details mt-3">
+                <p class="mb-1"><strong>Device Pixel Ratio:</strong> @pixelRatio</p>
+                <p class="mb-1"><strong>Orientation:</strong> @orientation</p>
+                <p class="text-muted mt-2">Updates automatically on resize</p>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .screen-size-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+
+    .loading-spinner {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .result-card {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .size-display {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #0d6efd;
+    }
+
+    .dimension {
+        padding: 0.5rem;
+        background: #e9ecef;
+        border-radius: 5px;
+    }
+
+    @@media (max-width: 768px) {
+        .size-display {
+            font-size: 1.8rem;
+        }
+    }
+</style>
+
+@code {
+    private string width = "0px";
+    private string height = "0px";
+    private string pixelRatio = "1.0";
+    private string orientation = "Portrait";
+    private bool isLoading = true;
+    private bool hasError = false;
+    private string errorMessage = "";
+    private DotNetObjectReference<ScreenSize>? objRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                objRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("registerResizeHandler", objRef);
+                await GetScreenData();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = ex.Message;
+                hasError = true;
+                isLoading = false;
+                StateHasChanged();
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task UpdateScreenSize()
+    {
+        await GetScreenData();
+    }
+
+    private async Task GetScreenData()
+    {
+        try
+        {
+            var dimensions = await JS.InvokeAsync<int[]>("getScreenDimensions");
+            width = $"{dimensions[0]}px";
+            height = $"{dimensions[1]}px";
+
+            pixelRatio = await JS.InvokeAsync<string>("getPixelRatio");
+            orientation = dimensions[0] > dimensions[1] ? "Landscape" : "Portrait";
+
+            isLoading = false;
+            hasError = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to update: {ex.Message}";
+            hasError = true;
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        objRef?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+}

@@ -1,0 +1,945 @@
+﻿@page "/promos"
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
+@using System.Globalization
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@inject PiaWebApp.Data.ApplicationDbContext DbContext
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        font-family: Robinsons, Robinsons Book, Robinsons Light;
+        background-color: white;
+        overflow: hidden;
+    }
+
+    #app-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+        margin: 0;
+    }
+
+    #tableContainer {
+        width: 95%;
+        max-width: 800px;
+        height: 95%;
+        max-height: 95%;
+        background: white;
+        border: 1px solid #ddd;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        padding: 10px;
+        overflow-y: auto;
+    }
+
+    #mainTable {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+        #mainTable td {
+            padding: 2px;
+            vertical-align: top;
+        }
+
+    .form-control {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 6px;
+        box-sizing: border-box;
+        height: 30px;
+    }
+
+    .narrow-input {
+        width: 130px;
+    }
+
+    .table-image {
+        height: 42px;
+        width: 130px;
+        display: block;
+        margin-left: auto;
+        margin-right: 0;
+    }
+
+    .combobox {
+        width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 5px;
+        height: 30px;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .promo-combobox {
+        width: 100%;
+    }
+
+    .free-combobox {
+        width: 100%;
+        border: 1px solid transparent;
+        border-radius: 0;
+        padding: 0;
+        text-align: center;
+        height: auto;
+        min-height: 80px;
+        resize: vertical;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .form-label {
+        font-weight: bold;
+        margin-bottom: 3px;
+        display: block;
+    }
+
+    .description-textarea {
+        width: 100%;
+        border: none !important;
+        background: none !important;
+        text-align: center;
+        box-shadow: none !important;
+        outline: none !important;
+        padding: 0;
+        resize: none;
+        color: #FF0000;
+        font-weight: bold;
+    }
+
+    .discount-header {
+        text-align: center;
+        color: #FF0000;
+        font-weight: bold;
+        padding: 5px 0;
+    }
+
+    .discount-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .discount-row {
+        display: flex;
+        justify-content: space-between;
+        width: 45%;
+        margin: 2px auto;
+    }
+
+    .discount-label {
+        width: 45%;
+        text-align: right;
+        font-weight: bold;
+        color: #FF0000;
+        padding-right: 5px;
+        white-space: nowrap;
+    }
+
+    .discount-value {
+        width: 45%;
+        text-align: right;
+        border: none !important;
+        background: none !important;
+        font-weight: bold;
+        color: #000000;
+        box-shadow: none !important;
+        outline: none !important;
+        cursor: default;
+        padding: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cash-payment-header {
+        text-align: left;
+        color: #FF0000;
+        font-weight: bold;
+        padding: 5px 0;
+    }
+
+    .simple-textbox {
+        border: none !important;
+        background: none !important;
+        font-weight: bold;
+        color: #FF0000;
+        box-shadow: none !important;
+        outline: none !important;
+        cursor: default;
+        padding: 0;
+        width: 100%;
+        text-align: right;
+    }
+
+    .simple-textbox2 {
+        border: none !important;
+        background: none !important;
+        font-weight: bold;
+        color: #000000;
+        box-shadow: none !important;
+        outline: none !important;
+        cursor: default;
+        padding: 0;
+        width: 100%;
+        text-align: center;
+    }
+
+    .simple-textbox3 {
+        border: none !important;
+        background: none !important;
+        font-weight: bold;
+        color: #000000;
+        box-shadow: none !important;
+        outline: none !important;
+        cursor: default;
+        padding: 0;
+        width: 100%;
+        text-align: center;
+    }
+
+    .section-divider {
+        border-top: 1px solid #eee;
+        margin: 10px 0;
+    }
+
+    .center-text {
+        text-align: center;
+    }
+
+    .right-text {
+        text-align: right;
+    }
+
+    .promo-label {
+        width: 50%;
+        text-align: right;
+        padding-right: 10px;
+    }
+
+    .free-section {
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    .srp-container {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        width: 100%;
+        margin-right: 0;
+        padding-right: 0;
+    }
+
+    .srp-label {
+        font-weight: bold;
+        white-space: nowrap;
+        margin-right: 5px;
+        font-size: inherit !important;
+    }
+
+    .srp-input {
+        width: 150px;
+        text-align: left;
+        margin-right: 0;
+        margin-left: 5px;
+        border: none !important;
+        background: none !important;
+        font-weight: bold;
+        color: #FF0000;
+        box-shadow: none !important;
+        outline: none !important;
+        cursor: default;
+        padding: 0;
+        font-size: inherit !important;
+    }
+
+    .image-srp-group {
+        display: inline-block;
+        text-align: right;
+        width: 100%;
+    }
+
+    .screen-size-label {
+        font-size: 8px !important;
+        height: 10px !important;
+        width: 100%;
+        text-align: center;
+        margin-top: 5px;
+    }
+
+    @@media (min-height: 1000px) {
+        .form-control, .combobox, .description-textarea, .form-label,
+        .discount-label, .discount-value, .cash-payment-header,
+        .simple-textbox, .simple-textbox2, .simple-textbox3,
+        .srp-label, .srp-input, .discount-header {
+            font-size: 20px !important;
+        }
+
+        .free-combobox {
+            font-size: 16px !important;
+        }
+    }
+
+    @@media (min-height: 800px) and (max-height: 999px) {
+        .form-control, .combobox, .description-textarea, .form-label,
+        .discount-label, .discount-value, .cash-payment-header,
+        .simple-textbox, .simple-textbox2, .simple-textbox3,
+        .srp-label, .srp-input, .discount-header {
+            font-size: 16px !important;
+        }
+
+        .free-combobox {
+            font-size: 13px !important;
+        }
+    }
+
+    @@media (max-height: 799px) {
+        .form-control, .combobox, .description-textarea, .form-label,
+        .discount-label, .discount-value, .cash-payment-header,
+        .simple-textbox, .simple-textbox2, .simple-textbox3,
+        .srp-label, .srp-input, .discount-header {
+            font-size: 14px !important;
+        }
+
+        .free-combobox {
+            font-size: 11px !important;
+        }
+    }
+
+    /* Portrait mode specific styles (only when height > width) */
+    @@media (orientation: portrait) {
+        #mainTable td {
+            padding: 8px;
+        }
+
+        .form-control, .combobox {
+            padding: 10px;
+            height: 40px;
+        }
+
+        .free-combobox {
+            padding: 10px;
+            min-height: 100px;
+        }
+
+        .form-label {
+            margin-bottom: 8px;
+        }
+
+        .discount-header, .cash-payment-header {
+            padding: 15px 0;
+        }
+
+        .section-divider {
+            margin: 20px 0;
+        }
+
+        .free-section {
+            margin: 20px 0 10px 0;
+        }
+
+        .discount-row {
+            margin: 8px auto;
+        }
+
+        .free-combobox option {
+            text-align: left;
+            vertical-align: top;
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+    }
+</style>
+
+<div id="app-container">
+    <div id="tableContainer">
+        <table id="mainTable">
+            <tr>
+                <td colspan="4" class="center-text">
+                    <span class="form-label">@storeDisplay</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="width:20%;">
+                    <label class="form-label">SKU</label>
+                    <input type="text" class="form-control narrow-input"
+                           @bind="sku"
+                           @oninput="HandleSkuChanged"
+                           style="text-align: right;"
+                           maxlength="6" />
+                </td>
+                <td colspan="3" style="text-align: right;">
+                    <div class="image-srp-group">
+                        <img src="/image/RA.png" class="table-image" />
+                        <div class="srp-container">
+                            <span class="srp-label">SRP:</span>
+                            <input type="text" class="srp-input" value="@srpFormatted" readonly />
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <textarea class="description-textarea" readonly>@description</textarea>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" class="promo-label">
+                    <label class="form-label">Promo Type:</label>
+                </td>
+                <td colspan="2">
+                    <input list="promoTypes" class="combobox promo-combobox"
+                           @bind="promoType"
+                           @oninput="HandlePromoTypeChanged"
+                           @onfocus="() => promoType = string.Empty" />
+                    <datalist id="promoTypes">
+                        @foreach (var title in availablePromoTitles)
+                        {
+                            <option value="@title">@title</option>
+                        }
+                    </datalist>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" class="promo-label">
+                    <label class="form-label">Mode of Payment:</label>
+                </td>
+                <td colspan="2">
+                    <input list="paymentModes" class="combobox promo-combobox"
+                           @bind="paymentMode"
+                           @oninput="HandleMopChanged"
+                           @onfocus="() => paymentMode = string.Empty" />
+                    <datalist id="paymentModes">
+                        @foreach (var mop in availableMops)
+                        {
+                            <option value="@mop">@mop</option>
+                        }
+                    </datalist>
+                </td>
+            </tr>
+            @if (!string.IsNullOrEmpty(paymentMode))
+            {
+                <tr>
+                    <td colspan="4" class="section-divider"></td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="discount-header">
+                        <strong>DISCOUNT(S)</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <div class="discount-container">
+                            <div class="discount-row">
+                                <label class="discount-label">ITEM:</label>
+                                <input type="text" class="discount-value" value="@itemDiscountFormatted" readonly />
+                            </div>
+                            <div class="discount-row">
+                                <label class="discount-label">EXTENDED:</label>
+                                <input type="text" class="discount-value" value="@extendedDiscountFormatted" readonly />
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="section-divider"></td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="cash-payment-header">
+                        <strong>@(paymentMode.Equals("Cash/ Card Straight", StringComparison.OrdinalIgnoreCase) ? "CASH/CARD STRAIGHT PAYMENT" : paymentMode.ToUpper())</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="center-text">
+                        <input type="text" class="simple-textbox2" value="@payOnly2" readonly />
+                    </td>
+                </tr>
+                @if (showPayOnly3)
+                {
+                    <tr>
+                        <td colspan="4" class="center-text">
+                            <input type="text" class="simple-textbox3" value="@payOnly3" readonly />
+                        </td>
+                    </tr>
+                }
+                <tr>
+                    <td colspan="4" class="right-text">
+                        <input type="text" class="simple-textbox" value="SAVE: @save2" readonly />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="free-section">
+                        <label class="form-label">Free</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <input list="freeItems" class="free-combobox"
+                               @bind="selectedFreeItem" />
+                        <datalist id="freeItems">
+                            @foreach (var freeItem in availableFreeItems)
+                            {
+                                <option value="@freeItem">@freeItem</option>
+                            }
+                        </datalist>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="screen-size-label">
+                        Width: @screenWidth Height: @screenHeight
+                    </td>
+                </tr>
+            }
+        </table>
+    </div>
+</div>
+
+@code {
+    private string storeDisplay = "";
+    private string sku = "";
+    private string description = "";
+    private string srpFormatted = "";
+    private string promoType = "";
+    private string paymentMode = "";
+    private string payOnly2 = "";
+    private string payOnly3 = "";
+    private string save2 = "";
+    private string selectedFreeItem = "";
+    private string itemDiscountFormatted = "";
+    private string extendedDiscountFormatted = "";
+    private bool showPayOnly3 = false;
+    private CancellationTokenSource debounceTokenSource = new CancellationTokenSource();
+    private List<string> availablePromoTitles = new List<string>();
+    private List<string> availableMops = new List<string>();
+    private List<string> availableFreeItems = new List<string>();
+    private long currentPromoNo = 0;
+    private int monthx = 0;
+    private decimal srpValue = 0;
+    private decimal itemDiscountValue = 0;
+    private decimal extendedDiscountValue = 0;
+    private string screenWidth = "0px";
+    private string screenHeight = "0px";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/Login");
+            return;
+        }
+
+        var storeCode = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "storeCode");
+        var storeDesc = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "storeDesc");
+
+        if (string.IsNullOrEmpty(storeCode) || string.IsNullOrEmpty(storeDesc))
+        {
+            Navigation.NavigateTo("/Login");
+            return;
+        }
+
+        storeDisplay = $"{storeCode} - {storeDesc}";
+        await GetScreenDimensions();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    function handleFullScreen() {
+                        const elem = document.documentElement;
+                        if (elem.requestFullscreen) {
+                            elem.requestFullscreen();
+                        } else if (elem.webkitRequestFullscreen) {
+                            elem.webkitRequestFullscreen();
+                        } else if (elem.msRequestFullscreen) {
+                            elem.msRequestFullscreen();
+                        }
+                    }
+
+                    function handleFullScreenChange() {
+                        const appContainer = document.getElementById('app-container');
+                        if (document.fullscreenElement ||
+                            document.webkitFullscreenElement ||
+                            document.msFullscreenElement) {
+                            appContainer.style.width = '100vw';
+                            appContainer.style.height = '100vh';
+                        } else {
+                            appContainer.style.width = '';
+                            appContainer.style.height = '';
+                        }
+                    }
+
+                    document.addEventListener('fullscreenchange', handleFullScreenChange);
+                    document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
+                    document.addEventListener('msfullscreenchange', handleFullScreenChange);
+
+                    // Initialize full screen
+                    setTimeout(handleFullScreen, 100);
+                ");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing full screen: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task GetScreenDimensions()
+    {
+        try
+        {
+            var dimensions = await JSRuntime.InvokeAsync<int[]>("getScreenDimensions");
+            screenWidth = $"{dimensions[0]}px";
+            screenHeight = $"{dimensions[1]}px";
+            StateHasChanged();
+        }
+        catch
+        {
+            screenWidth = screenHeight = "N/A";
+        }
+    }
+
+    [JSInvokable]
+    public async Task UpdateScreenSize()
+    {
+        await GetScreenDimensions();
+    }
+
+    private async Task HandleSkuChanged(ChangeEventArgs e)
+    {
+        sku = e.Value?.ToString()?.Trim() ?? "";
+        availablePromoTitles.Clear();
+        availableMops.Clear();
+        availableFreeItems.Clear();
+        promoType = "";
+        paymentMode = "";
+        selectedFreeItem = "";
+        description = "";
+        srpFormatted = "";
+        itemDiscountFormatted = "";
+        extendedDiscountFormatted = "";
+        payOnly2 = "";
+        payOnly3 = "";
+        save2 = "";
+        currentPromoNo = 0;
+        monthx = 0;
+        srpValue = 0;
+        itemDiscountValue = 0;
+        extendedDiscountValue = 0;
+        showPayOnly3 = false;
+
+        debounceTokenSource.Cancel();
+        debounceTokenSource = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(500, debounceTokenSource.Token);
+
+            if (string.IsNullOrEmpty(sku))
+            {
+                StateHasChanged();
+                return;
+            }
+
+            if (!int.TryParse(sku, out int parsedSku))
+            {
+                description = "Invalid SKU format";
+                StateHasChanged();
+                return;
+            }
+
+            await LoadPromoData(parsedSku);
+        }
+        catch (TaskCanceledException)
+        {
+            // Ignore canceled tasks
+        }
+        catch (Exception ex)
+        {
+            description = "Error loading data: " + ex.Message;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadPromoData(int parsedSku)
+    {
+        try
+        {
+            DateTime today = DateTime.Now.Date;
+            var storeCode = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "storeCode");
+
+            var activePromos = await DbContext.Promos
+                .Where(p => p.Sku == parsedSku)
+                .Where(p => today >= p.StartDate.Date && today <= p.EndDate.Date)
+                .Where(p => p.storecodex == storeCode || p.storecodex == "All")
+                .OrderByDescending(p => p.EndDate)
+                .ToListAsync();
+
+            if (!activePromos.Any())
+            {
+                description = "";
+                srpFormatted = "";
+                availablePromoTitles.Clear();
+                StateHasChanged();
+                return;
+            }
+
+            var currentPromo = activePromos.First();
+            description = $"{currentPromo.subcategory} {currentPromo.Description}\n{currentPromo.capacity}";
+            currentPromoNo = currentPromo.PromoNo;
+
+            if (decimal.TryParse(currentPromo.Srp, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsedSrp))
+            {
+                srpValue = parsedSrp;
+                var nfi = new CultureInfo("en-PH").NumberFormat;
+                nfi.CurrencySymbol = "₱";
+                nfi.CurrencyDecimalDigits = 2;
+                srpFormatted = srpValue.ToString("C", nfi);
+            }
+            else
+            {
+                srpFormatted = "Invalid SRP format";
+            }
+
+            availablePromoTitles = activePromos
+                .Select(p => p.Title)
+                .Where(title => !string.IsNullOrEmpty(title))
+                .Distinct()
+                .ToList();
+
+            if (availablePromoTitles.Count == 1)
+            {
+                promoType = availablePromoTitles.First();
+                await LoadPromoDetails(parsedSku, promoType);
+            }
+        }
+        catch (Exception ex)
+        {
+            description = "Error loading promo data: " + ex.Message;
+            Console.WriteLine($"Error in LoadPromoData: {ex.Message}");
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadPromoDetails(int sku, string title)
+    {
+        try
+        {
+            DateTime today = DateTime.Now.Date;
+            var storeCode = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "storeCode");
+
+            var promo = await DbContext.Promos
+                .FirstOrDefaultAsync(p => p.Sku == sku
+                    && p.Title == title
+                    && today >= p.StartDate.Date
+                    && today <= p.EndDate.Date
+                    && (p.storecodex == storeCode || p.storecodex == "All"));
+
+            if (promo != null)
+            {
+                currentPromoNo = promo.PromoNo;
+            }
+
+            var mops = await DbContext.PromoDetails
+                .Where(p => p.PromoNo == currentPromoNo)
+                .Where(p => p.Sku == sku)
+                .Where(p => p.Title == title)
+                .Select(p => p.Mop)
+                .Distinct()
+                .ToListAsync();
+
+            availableMops = mops;
+            paymentMode = "";
+            selectedFreeItem = "";
+            StateHasChanged();
+
+            if (availableMops.Count == 1)
+            {
+                paymentMode = availableMops.First();
+                await LoadDiscountValues(sku, title, paymentMode);
+                await LoadFreeItems(sku, title, paymentMode);
+            }
+        }
+        catch (Exception ex)
+        {
+            description = "Error loading promo details: " + ex.Message;
+            Console.WriteLine($"Error in LoadPromoDetails: {ex.Message}");
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandlePromoTypeChanged(ChangeEventArgs e)
+    {
+        promoType = e.Value?.ToString()?.Trim() ?? "";
+        availableMops.Clear();
+        availableFreeItems.Clear();
+        paymentMode = "";
+        selectedFreeItem = "";
+        itemDiscountFormatted = "";
+        extendedDiscountFormatted = "";
+        payOnly2 = "";
+        payOnly3 = "";
+        save2 = "";
+        itemDiscountValue = 0;
+        extendedDiscountValue = 0;
+        showPayOnly3 = false;
+
+        if (string.IsNullOrEmpty(promoType) || !int.TryParse(sku, out int parsedSku))
+        {
+            StateHasChanged();
+            return;
+        }
+
+        await LoadPromoDetails(parsedSku, promoType);
+    }
+
+    private async Task HandleMopChanged(ChangeEventArgs e)
+    {
+        paymentMode = e.Value?.ToString()?.Trim() ?? "";
+        selectedFreeItem = "";
+        payOnly2 = "";
+        payOnly3 = "";
+        save2 = "";
+        showPayOnly3 = false;
+
+        if (!string.IsNullOrEmpty(paymentMode) && !string.IsNullOrEmpty(promoType) && int.TryParse(sku, out int parsedSku))
+        {
+            await LoadDiscountValues(parsedSku, promoType, paymentMode);
+            await LoadFreeItems(parsedSku, promoType, paymentMode);
+            CalculatePaymentFields();
+        }
+        else
+        {
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadDiscountValues(int sku, string title, string mop)
+    {
+        try
+        {
+            var promoDetail = await DbContext.PromoDetails
+                .FirstOrDefaultAsync(pd => pd.PromoNo == currentPromoNo
+                    && pd.Sku == sku
+                    && pd.Title == title
+                    && pd.Mop == mop);
+
+            if (promoDetail != null)
+            {
+                var nfi = new CultureInfo("en-PH").NumberFormat;
+                nfi.CurrencySymbol = "₱";
+                nfi.CurrencyDecimalDigits = 2;
+
+                itemDiscountValue = Convert.ToDecimal(promoDetail.Discount);
+                extendedDiscountValue = Convert.ToDecimal(promoDetail.Extended);
+                monthx = promoDetail.monthx;
+
+                itemDiscountFormatted = itemDiscountValue.ToString("C", nfi);
+                extendedDiscountFormatted = extendedDiscountValue.ToString("C", nfi);
+
+                CalculatePaymentFields();
+            }
+            else
+            {
+                itemDiscountFormatted = "";
+                extendedDiscountFormatted = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            description = "Error loading discount values: " + ex.Message;
+            Console.WriteLine($"Error in LoadDiscountValues: {ex.Message}");
+            StateHasChanged();
+        }
+    }
+
+    private void CalculatePaymentFields()
+    {
+        try
+        {
+            var nfi = new CultureInfo("en-PH").NumberFormat;
+            nfi.CurrencySymbol = "₱";
+            nfi.CurrencyDecimalDigits = 2;
+
+            decimal totalDiscount = itemDiscountValue + extendedDiscountValue;
+            decimal payOnlyAmount = srpValue - totalDiscount;
+
+            showPayOnly3 = !paymentMode.StartsWith("Cash", StringComparison.OrdinalIgnoreCase) && monthx > 0;
+
+            save2 = totalDiscount.ToString("C", nfi);
+
+            if (monthx > 0)
+            {
+                decimal monthlyPayment = payOnlyAmount / monthx;
+                payOnly2 = $"PAY ONLY: {payOnlyAmount.ToString("C", nfi)}";
+
+                if (showPayOnly3)
+                {
+                    payOnly3 = $"{monthlyPayment.ToString("C", nfi)} x {monthx} month(s)";
+                }
+            }
+            else
+            {
+                payOnly2 = $"PAY ONLY: {payOnlyAmount.ToString("C", nfi)}";
+                payOnly3 = "";
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error calculating payment fields: {ex.Message}");
+        }
+    }
+
+    private async Task LoadFreeItems(int sku, string title, string mop)
+    {
+        try
+        {
+            var promo = await DbContext.Promos
+                .FirstOrDefaultAsync(p => p.PromoNo == currentPromoNo
+                    && p.Sku == sku
+                    && p.Title == title);
+
+            if (promo != null && !string.IsNullOrEmpty(promo.PromoFreebies))
+            {
+                availableFreeItems = promo.PromoFreebies
+                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(f => f.Trim())
+                    .ToList();
+            }
+            else
+            {
+                availableFreeItems = new List<string>();
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading free items: {ex.Message}");
+            availableFreeItems = new List<string>();
+            StateHasChanged();
+        }
+    }
+}
