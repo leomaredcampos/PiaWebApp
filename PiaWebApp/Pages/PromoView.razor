@@ -69,8 +69,6 @@
     }
 
     .table-image {
-        height: 42px;
-        width: 130px;
         display: block;
         margin-left: auto;
         margin-right: 0;
@@ -284,16 +282,52 @@
         margin-top: 5px;
     }
 
-    @@media (min-height: 1000px) {
+    .store-code-label {
+        font-weight: bold;
+        margin-bottom: 0;
+    }
+
+    .store-desc-label {
+        font-weight: bold;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    @@media (min-height: 1262px) {
         .form-control, .combobox, .description-textarea, .form-label,
         .discount-label, .discount-value, .cash-payment-header,
         .simple-textbox, .simple-textbox2, .simple-textbox3,
-        .srp-label, .srp-input, .discount-header {
+        .srp-label, .srp-input, .discount-header,
+        .store-code-label, .store-desc-label {
+            font-size: 24px !important;
+        }
+
+        .free-combobox {
+            font-size: 20px !important;
+        }
+
+        .table-image {
+            height: 70px;
+            width: 200px;
+        }
+    }
+
+    @@media (min-height: 1000px) and (max-height: 1261px) {
+        .form-control, .combobox, .description-textarea, .form-label,
+        .discount-label, .discount-value, .cash-payment-header,
+        .simple-textbox, .simple-textbox2, .simple-textbox3,
+        .srp-label, .srp-input, .discount-header,
+        .store-code-label, .store-desc-label {
             font-size: 20px !important;
         }
 
         .free-combobox {
             font-size: 16px !important;
+        }
+
+        .table-image {
+            height: 60px;
+            width: 180px;
         }
     }
 
@@ -301,12 +335,18 @@
         .form-control, .combobox, .description-textarea, .form-label,
         .discount-label, .discount-value, .cash-payment-header,
         .simple-textbox, .simple-textbox2, .simple-textbox3,
-        .srp-label, .srp-input, .discount-header {
+        .srp-label, .srp-input, .discount-header,
+        .store-code-label, .store-desc-label {
             font-size: 16px !important;
         }
 
         .free-combobox {
             font-size: 13px !important;
+        }
+
+        .table-image {
+            height: 50px;
+            width: 150px;
         }
     }
 
@@ -314,12 +354,18 @@
         .form-control, .combobox, .description-textarea, .form-label,
         .discount-label, .discount-value, .cash-payment-header,
         .simple-textbox, .simple-textbox2, .simple-textbox3,
-        .srp-label, .srp-input, .discount-header {
+        .srp-label, .srp-input, .discount-header,
+        .store-code-label, .store-desc-label {
             font-size: 14px !important;
         }
 
         .free-combobox {
             font-size: 11px !important;
+        }
+
+        .table-image {
+            height: 42px;
+            width: 130px;
         }
     }
 
@@ -373,7 +419,8 @@
         <table id="mainTable">
             <tr>
                 <td colspan="4" class="center-text">
-                    <span class="form-label">@storeDisplay</span>
+                    <div class="store-code-label">@storeCode</div>
+                    <div class="store-desc-label">@storeDesc</div>
                 </td>
             </tr>
             <tr>
@@ -512,7 +559,8 @@
 </div>
 
 @code {
-    private string storeDisplay = "";
+    private string storeCode = "";
+    private string storeDesc = "";
     private string sku = "";
     private string description = "";
     private string srpFormatted = "";
@@ -546,8 +594,8 @@
             return;
         }
 
-        var storeCode = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "storeCode");
-        var storeDesc = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "storeDesc");
+        storeCode = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "storeCode");
+        storeDesc = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "storeDesc");
 
         if (string.IsNullOrEmpty(storeCode) || string.IsNullOrEmpty(storeDesc))
         {
@@ -555,7 +603,6 @@
             return;
         }
 
-        storeDisplay = $"{storeCode} - {storeDesc}";
         await GetScreenDimensions();
     }
 

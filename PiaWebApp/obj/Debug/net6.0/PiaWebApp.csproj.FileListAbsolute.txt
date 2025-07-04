@@ -181,3 +181,4 @@ C:\PiaWebApp\PiaWebApp\obj\Debug\net6.0\refint\PiaWebApp.dll
 C:\PiaWebApp\PiaWebApp\obj\Debug\net6.0\PiaWebApp.pdb
 C:\PiaWebApp\PiaWebApp\obj\Debug\net6.0\PiaWebApp.genruntimeconfig.cache
 C:\PiaWebApp\PiaWebApp\obj\Debug\net6.0\ref\PiaWebApp.dll
+C:\PiaWebApp\PiaWebApp\obj\Debug\net6.0\PiaWebApp.sourcelink.json
