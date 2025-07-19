@@ -36,12 +36,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ291bnRlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/PiaWebApp/PiaWebApp/Pages/Login.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW4ucmF6b3I=
+[C:/PiaWebApp/PiaWebApp/Pages/Login/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW5cTG9naW4ucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/PiaWebApp/PiaWebApp/Pages/PromoView.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvbW9WaWV3LnJhem9y
+[C:/PiaWebApp/PiaWebApp/Pages/Promos/Component.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvbW9zXENvbXBvbmVudC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/PiaWebApp/PiaWebApp/Pages/Promos/Component1.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvbW9zXENvbXBvbmVudDEucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/PiaWebApp/PiaWebApp/Pages/Promos/PromoView.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvbW9zXFByb21vVmlldy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/PiaWebApp/PiaWebApp/Pages/ScreenSize.razor]

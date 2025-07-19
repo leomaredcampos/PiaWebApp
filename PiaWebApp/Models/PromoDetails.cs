@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PiaWebApp.Data
+namespace PiaWebApp.Models
 {
     [Table("datagroup5")] // Maps sa 'datagroup5' table sa database
     public class PromoDetails

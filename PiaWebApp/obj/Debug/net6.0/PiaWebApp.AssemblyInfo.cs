@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PiaWebApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e27c9e1f4e7fd51fdeac87ea5ca8d6f94abe78a3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+04157a1bce398a8f215a016a9b11eb7f3e5fd431")]
 [assembly: System.Reflection.AssemblyProductAttribute("PiaWebApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PiaWebApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

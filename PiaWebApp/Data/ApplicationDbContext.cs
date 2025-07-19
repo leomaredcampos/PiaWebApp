@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PiaWebApp.Models;
 
 namespace PiaWebApp.Data
 {

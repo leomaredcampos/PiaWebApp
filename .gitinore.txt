@@ -21,7 +21,3 @@ publish/
 # Other
 *.DS_Store
 Thumbs.db
-bin/
-obj/
-publish/
-.vs/

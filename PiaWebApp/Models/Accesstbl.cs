@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PiaWebApp.Data
+namespace PiaWebApp.Models
 {
     [Table("accesstbl")] // Maps to your database table
     public class Accesstbl

@@ -1,29 +1,27 @@
 ﻿@page "/Login"
 @using Microsoft.AspNetCore.Components
-@using Microsoft.JSInterop
-@using Microsoft.EntityFrameworkCore
-@using PiaWebApp.Auth
-@inject IJSRuntime JSRuntime
+@using Microsoft.AspNetCore.Components.Web
+@using PiaWebApp.Data
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
-@inject PiaWebApp.Data.ApplicationDbContext DbContext
-@inject ILogger<Login> Logger
+@inject ApplicationDbContext DbContext
+@inject ILogger<LoginViewModel> Logger
 
 <div class="login-container">
     <img src="/image/logo.png" class="logo" alt="Store Logo" />
     <div class="code-label">Code</div>
     <input type="text"
-           @bind="storeCode"
+           @bind="ViewModel.StoreCode"
            @bind:event="oninput"
-           class="code-input @(IsInvalid ? "invalid" : "")"
+           class="code-input @(ViewModel.IsInvalid ? "invalid" : "")"
            @onkeypress="HandleKeyPress"
            placeholder="Enter your code"
            autofocus />
 
     <button @onclick="HandleLogin"
             class="enter-button"
-            disabled="@(string.IsNullOrWhiteSpace(storeCode) || isLoading)">
-        @if (isLoading)
+            disabled="@(string.IsNullOrWhiteSpace(ViewModel.StoreCode) || ViewModel.IsLoading)">
+        @if (ViewModel.IsLoading)
         {
             <span class="spinner"></span>
         }
@@ -33,81 +31,41 @@
         }
     </button>
 
-    @if (!string.IsNullOrEmpty(errorMessage))
+    @if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
     {
         <div class="error-message">
-            <i class="fas fa-exclamation-circle"></i> @errorMessage
+            <span class="exclamation-icon">!</span> @ViewModel.ErrorMessage
         </div>
     }
 </div>
 
 @code {
-    private string storeCode = "";
-    private string errorMessage = "";
-    private bool isLoading = false;
-    private bool IsInvalid => !string.IsNullOrEmpty(errorMessage);
+    private LoginViewModel ViewModel { get; set; } = new LoginViewModel();
 
     protected override async Task OnInitializedAsync()
     {
-        // Check if already authenticated
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated ?? false)
+        try
         {
-            Navigation.NavigateTo("/promos");
+            // Inject required services into the ViewModel
+            ViewModel.Navigation = Navigation;
+            ViewModel.AuthStateProvider = AuthStateProvider;
+            ViewModel.DbContext = DbContext;
+            ViewModel.Logger = Logger;
+
+            // Initialize the ViewModel
+            await ViewModel.InitializeAsync();
+        }
+        catch (Exception ex)
+        {
+            ViewModel.ErrorMessage = "Initialization failed. Please refresh the page.";
+            Logger.LogError(ex, "Login page initialization error");
         }
     }
 
     private async Task HandleLogin()
     {
-        if (isLoading) return;
-
-        isLoading = true;
-        errorMessage = "";
-        StateHasChanged(); // Force UI update to show loading state
-
-        try
-        {
-            if (string.IsNullOrWhiteSpace(storeCode))
-            {
-                errorMessage = "Please enter a store code";
-                return;
-            }
-
-            // Normalize the store code (trim and uppercase)
-            storeCode = storeCode.Trim().ToUpper();
-
-            Logger.LogInformation($"Attempting login for store code: {storeCode}");
-
-            var store = await DbContext.Accesstbl
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.storez == storeCode);
-
-            if (store == null)
-            {
-                errorMessage = "Invalid store code. Please try again.";
-                Logger.LogWarning($"Invalid store code attempt: {storeCode}");
-                return;
-            }
-
-            if (AuthStateProvider is CustomAuthStateProvider customAuthProvider)
-            {
-                Logger.LogInformation($"Successful login for store: {storeCode}");
-                await customAuthProvider.MarkUserAsAuthenticated(store.storez, store.sdescription);
-
-                // Small delay to ensure state is updated before navigation
-                await Task.Delay(100);
-                Navigation.NavigateTo("/promos", forceLoad: true);
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = "Login failed. Please try again later.";
-            Logger.LogError(ex, $"Login error for store {storeCode}: {ex.Message}");
-        }
-        finally
-        {
-            isLoading = false;
-        }
+        await ViewModel.HandleLogin();
+        StateHasChanged(); // Manually update UI after login attempt
     }
 
     private async Task HandleKeyPress(KeyboardEventArgs e)
@@ -199,6 +157,18 @@
         display: flex;
         align-items: center;
         gap: 8px;
+    }
+
+    .exclamation-icon {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 20px;
+        font-weight: bold;
     }
 
     .spinner {

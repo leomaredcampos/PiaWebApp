@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PiaWebApp.Data
+namespace PiaWebApp.Models
 {
     [Table("datagroup1")] // Maps to your database table
     public class Promo
@@ -31,6 +31,27 @@ namespace PiaWebApp.Data
 
         [Column("freebies")]
         public string PromoFreebies { get; set; } = string.Empty;
+
+        [Column("Data18")]
+        public string Data18 { get; set; } = string.Empty;
+
+        [Column("Data19")]
+        public string Data19 { get; set; } = string.Empty;
+
+        [Column("Data20")]
+        public string Data20 { get; set; } = string.Empty;
+
+        [Column("Data21")]
+        public string Data21 { get; set; } = string.Empty;
+
+        [Column("Data22")]
+        public string Data22 { get; set; } = string.Empty;
+
+        [Column("Data23")]
+        public string Data23 { get; set; } = string.Empty;
+
+        [Column("Data31")]
+        public string Data31 { get; set; } = string.Empty;
 
         [Column("startdate")]
         public DateTime StartDate { get; set; }

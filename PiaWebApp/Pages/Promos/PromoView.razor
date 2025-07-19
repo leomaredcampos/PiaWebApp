@@ -1,0 +1,712 @@
+﻿@page "/promos"
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@inject PromoViewModel ViewModel
+
+<style>
+    /* SIMPLIFIED FONT LOADING */
+    @@font-face {
+        font-family: 'Robinsons';
+        src: url('/font/Robinsons-Book.woff2') format('woff2'), url('/font/Robinsons-Book.woff') format('woff');
+        font-display: swap;
+    }
+
+    @@font-face {
+        font-family: 'RobinsonsBold';
+        src: url('/font/Robinsons-Bold.woff2') format('woff2'), url('/font/Robinsons-Bold.woff') format('woff');
+        font-display: swap;
+    }
+
+    /* FORCE FONT EVERYWHERE */
+    html, body, #app-container, #tableContainer,
+    table, tr, td, input, textarea, select, label, div, span {
+        font-family: 'Robinsons' !important;
+    }
+    /* BASE STYLES */
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        font-family: 'Robinsons';
+        background-color: white;
+        overflow: hidden;
+    }
+
+    #app-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+        margin: 0;
+        transform: none !important; /* Remove the scale() */
+    }
+
+    #tableContainer {
+        width: 95%;
+        max-width: 760px;
+        height: 95%;
+        max-height: 95%;
+        background: white;
+        border: 1px solid #ddd;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        padding: 2px;
+        overflow: hidden;
+    }
+
+    #mainTable {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+        #mainTable td {
+            padding: 2px;
+            vertical-align: top;
+        }
+
+    .form-control {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 6px;
+        box-sizing: border-box;
+        height: 30px;
+        font-family: 'Robinsons';
+    }
+
+    .narrow-input {
+        width: 120px;
+    }
+
+    .table-image {
+        display: block;
+        margin-left: auto;
+        margin-right: 0;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .combobox {
+        width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 5px 5px 5px 8px;
+        height: 30px;
+        -webkit-tap-highlight-color: transparent;
+        font-family: 'Robinsons';
+    }
+
+    .promo-combobox {
+        width: 100%;
+        font-size: 14px !important;
+        font-weight: normal;
+    }
+
+    .mop-combobox {
+        width: 100%;
+        font-size: 14px !important;
+        font-weight: bold;
+    }
+
+    .form-label {
+        font-weight: bold;
+        margin-bottom: 3px;
+        display: block;
+        font-size: 14px !important;
+        font-family: 'Robinsons';
+    }
+
+    .description-textarea {
+        width: 100%;
+        border: none !important;
+        background: none !important;
+        text-align: center;
+        box-shadow: none !important;
+        outline: none !important;
+        font-weight: bold;
+        padding: 0;
+        resize: none;
+        color: #FF0000;
+        font-family: 'RobinsonsBold';
+    }
+
+    .discount-header {
+        text-align: center;
+        color: #FF0000;
+        font-weight: bold;
+        padding: 5px 0;
+        font-family: 'Robinsons';
+    }
+
+    .discount-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .discount-row {
+        display: flex;
+        justify-content: space-between;
+        width: 45%;
+        margin: 2px auto;
+    }
+
+    .discount-label {
+        width: 45%;
+        text-align: right;
+        font-weight: bold;
+        color: #FF0000;
+        padding-right: 5px;
+        white-space: nowrap;
+        font-family: Robinsons;
+    }
+
+    .discount-value {
+        width: 45%;
+        text-align: right;
+        border: none !important;
+        background: none !important;
+        font-weight: bold;
+        color: #000000;
+        box-shadow: none !important;
+        outline: none !important;
+        cursor: default;
+        padding: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: 'Robinsons';
+    }
+
+    .cash-payment-header {
+        text-align: left;
+        color: #FF0000;
+        font-weight: bold;
+        padding: 5px 0;
+        font-family: 'Robinsons';
+    }
+
+    .simple-textbox {
+        border: none !important;
+        background: none !important;
+        font-weight: bold;
+        color: #FF0000;
+        box-shadow: none !important;
+        outline: none !important;
+        cursor: default;
+        padding: 0;
+        width: 100%;
+        text-align: right;
+        font-family: 'Robinsons';
+    }
+
+    .simple-textbox2 {
+        border: none !important;
+        background: none !important;
+        font-weight: bold;
+        color: #000000;
+        box-shadow: none !important;
+        outline: none !important;
+        cursor: default;
+        padding: 0;
+        width: 100%;
+        text-align: center;
+        font-family: 'Robinsons';
+    }
+
+    .simple-textbox3 {
+        border: none !important;
+        background: none !important;
+        font-weight: bold;
+        color: #000000;
+        box-shadow: none !important;
+        outline: none !important;
+        cursor: default;
+        padding: 0;
+        width: 100%;
+        text-align: center;
+        font-family: 'Robinsons';
+    }
+
+    .section-divider {
+        border-top: 1px solid #eee;
+        margin: 10px 0;
+    }
+
+    .center-text {
+        text-align: center;
+    }
+
+    .right-text {
+        text-align: right;
+    }
+
+    .promo-label {
+        width: 50%;
+        text-align: right;
+        padding-right: 0;
+    }
+
+    .free-section {
+        text-align: center;
+        margin: 5px 0;
+    }
+
+    .srp-container {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        width: 100%;
+        margin-right: 0;
+        padding-right: 0;
+        margin-top: 20px;
+    }
+
+    .srp-label {
+        font-weight: bold;
+        white-space: nowrap;
+        margin-right: 5px;
+        font-size: inherit !important;
+        font-weight: bold;
+        font-family: 'RobinsonsBold';
+    }
+
+    .srp-input {
+        width: 140px;
+        text-align: left;
+        margin-right: 0;
+        margin-left: 5px;
+        border: none !important;
+        background: none !important;
+        font-weight: bold;
+        color: #FF0000;
+        box-shadow: none !important;
+        outline: none !important;
+        cursor: default;
+        padding: 0;
+        font-size: inherit !important;
+        font-family: 'Robinsons';
+    }
+
+    .image-srp-group {
+        display: inline-block;
+        text-align: right;
+        width: 100%;
+    }
+
+    .store-code-label {
+        font-weight: bold;
+        margin-bottom: 0;
+        font-family: 'Robinsons';
+    }
+
+    .store-desc-label {
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-family: 'Robinsons';
+        font-weight: bold;
+    }
+
+    .free-items-container {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    .free-items-upper {
+        width: 100%;
+        height: 60px;
+        padding: 5px;
+        resize: none;
+        white-space: pre-line;
+        font-family: 'Robinsons';
+        text-align: center;
+        font-weight: bold;
+        font-size: 12px !important;
+        border: 1px solid transparent !important;
+        background: white !important;
+        overflow-y: auto;
+        line-height: 1.2;
+    }
+
+    .free-items-lower {
+        width: 100%;
+        height: 40px;
+        padding: 5px;
+        resize: none;
+        white-space: pre-line;
+        font-family: 'Robinsons';
+        text-align: center;
+        font-weight: bold;
+        font-size: 12px !important;
+        border: 1px solid transparent !important;
+        background: white !important;
+        overflow-y: auto;
+        line-height: 1.2;
+    }
+
+    /* Responsive adjustments */
+    @@media (min-height: 1262px) {
+        .form-control, .combobox, .description-textarea, .form-label,
+        .discount-label, .discount-value, .cash-payment-header,
+        .simple-textbox, .simple-textbox2, .simple-textbox3,
+        .srp-label, .srp-input, .discount-header,
+        .store-code-label, .store-desc-label {
+            font-size: 24px !important;
+        }
+
+        .mop-combobox {
+            font-size: 20px !important;
+        }
+
+        .table-image {
+            height: 70px;
+            width: 200px;
+        }
+
+        .free-items-upper {
+            height: 80px;
+            font-size: 16px !important;
+        }
+
+        .free-items-lower {
+            height: 60px;
+            font-size: 16px !important;
+        }
+    }
+
+    @@media (min-height: 1000px) and (max-height: 1261px) {
+        .form-control, .combobox, .description-textarea, .form-label,
+        .discount-label, .discount-value, .cash-payment-header,
+        .simple-textbox, .simple-textbox2, .simple-textbox3,
+        .srp-label, .srp-input, .discount-header,
+        .store-code-label, .store-desc-label {
+            font-size: 20px !important;
+        }
+
+        .mop-combobox {
+            font-size: 14px !important;
+        }
+
+        .table-image {
+            height: 60px;
+            width: 180px;
+        }
+
+        .free-items-upper {
+            height: 70px;
+            font-size: 14px !important;
+        }
+
+        .free-items-lower {
+            height: 50px;
+            font-size: 14px !important;
+        }
+    }
+
+    @@media (min-height: 800px) and (max-height: 999px) {
+        .form-control, .combobox, .description-textarea, .form-label,
+        .discount-label, .discount-value, .cash-payment-header,
+        .simple-textbox, .simple-textbox2, .simple-textbox3,
+        .srp-label, .srp-input, .discount-header,
+        .store-code-label, .store-desc-label {
+            font-size: 16px !important;
+        }
+
+        .mop-combobox {
+            font-size: 14px !important;
+        }
+
+        .table-image {
+            height: 50px;
+            width: 150px;
+        }
+
+        .free-items-upper {
+            height: 60px;
+            font-size: 12px !important;
+        }
+
+        .free-items-lower {
+            height: 40px;
+            font-size: 12px !important;
+        }
+    }
+
+    @@media (max-height: 799px) {
+        .form-control, .combobox, .description-textarea, .form-label,
+        .discount-label, .discount-value, .cash-payment-header,
+        .simple-textbox, .simple-textbox2, .simple-textbox3,
+        .srp-label, .srp-input, .discount-header,
+        .store-code-label, .store-desc-label {
+            font-family: 'Robinsons';
+            font-size: 14px !important;
+        }
+
+        .mop-combobox {
+            font-size: 14px !important;
+        }
+
+        .table-image {
+            height: 42px;
+            width: 130px;
+        }
+
+        .free-items-upper {
+            height: 50px;
+            font-size: 11px !important;
+        }
+
+        .free-items-lower {
+            height: 30px;
+            font-size: 11px !important;
+        }
+    }
+
+    @@media (orientation: portrait) {
+        #mainTable td {
+            padding: 8px;
+        }
+
+        .form-control, .combobox {
+            padding: 10px;
+            height: 40px;
+        }
+
+        .form-label {
+            margin-bottom: 8px;
+        }
+
+        .discount-header, .cash-payment-header {
+            padding: 15px 0;
+        }
+
+        .section-divider {
+            margin: 20px 0;
+        }
+
+        .free-section {
+            margin: 10px 0 5px 0;
+        }
+
+        .discount-row {
+            margin: 8px auto;
+        }
+
+        .free-items-upper {
+            height: 120px; /* Increased from 80px to 120px (+40px) */
+        }
+
+        .free-items-lower {
+            height: 100px; /* Increased from 60px to 100px (+40px) */
+        }
+    }
+</style>
+
+<div id="app-container">
+    <div id="tableContainer">
+        <table id="mainTable">
+            <tr>
+                <td colspan="4" class="center-text">
+                    <div class="store-code-label">@ViewModel.StoreCode</div>
+                    <div class="store-desc-label">@ViewModel.StoreDesc</div>
+                </td>
+            </tr>
+            <tr>
+                <td style="width:20%;">
+                    <label class="form-label">SKU</label>
+                    <input type="text" class="form-control narrow-input"
+                           @bind="ViewModel.Sku"
+                           @oninput="async e => await ViewModel.HandleSkuChanged(e.Value?.ToString())"
+                           style="text-align: right;"
+                           maxlength="6" />
+                </td>
+                <td colspan="3" style="text-align: right;">
+                    <div class="image-srp-group">
+                        <img src="/image/RA.png" class="table-image" />
+                        <div class="srp-container">
+                            <span class="srp-label">SRP:</span>
+                            <input type="text" class="srp-input" value="@ViewModel.SrpFormatted" readonly />
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <textarea class="description-textarea" readonly>@ViewModel.Description</textarea>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" class="promo-label">
+                    <label class="form-label">Promo Type:</label>
+                </td>
+                <td colspan="2">
+                    <input list="promoTypes" class="combobox mop-combobox"
+                           @bind="ViewModel.PromoType"
+                           @oninput="async e => await ViewModel.HandlePromoTypeChanged(e.Value?.ToString())"
+                           @onfocus="() => ViewModel.PromoType = string.Empty" />
+                    <datalist id="promoTypes">
+                        @foreach (var title in ViewModel.AvailablePromoTitles)
+                        {
+                            <option value="@title">@title</option>
+                        }
+                    </datalist>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" class="promo-label">
+                    <label class="form-label">Mode of Payment:</label>
+                </td>
+                <td colspan="2">
+                    <input list="paymentModes" class="combobox mop-combobox"
+                           @bind="ViewModel.PaymentMode"
+                           @oninput="async e => await ViewModel.HandleMopChanged(e.Value?.ToString())"
+                           @onfocus="() => ViewModel.PaymentMode = string.Empty" />
+                    <datalist id="paymentModes">
+                        @foreach (var mop in ViewModel.AvailableMops)
+                        {
+                            <option value="@mop">@mop</option>
+                        }
+                    </datalist>
+                </td>
+            </tr>
+            @if (!string.IsNullOrEmpty(ViewModel.PaymentMode))
+            {
+                <tr>
+                    <td colspan="4" class="section-divider"></td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="discount-header">
+                        <strong>DISCOUNT(S)</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <div class="discount-container">
+                            <div class="discount-row">
+                                <label class="discount-label">ITEM:</label>
+                                <input type="text" class="discount-value" value="@ViewModel.ItemDiscountFormatted" readonly />
+                            </div>
+                            <div class="discount-row">
+                                <label class="discount-label">EXTENDED:</label>
+                                <input type="text" class="discount-value" value="@ViewModel.ExtendedDiscountFormatted" readonly />
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="section-divider"></td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="cash-payment-header">
+                        <strong>@ViewModel.CashPaymentHeader</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="center-text">
+                        <input type="text" class="simple-textbox2" value="@ViewModel.PayOnly2" readonly />
+                    </td>
+                </tr>
+                @if (ViewModel.ShowPayOnly3)
+                {
+                    <tr>
+                        <td colspan="4" class="center-text">
+                            <input type="text" class="simple-textbox3" value="@ViewModel.PayOnly3" readonly />
+                        </td>
+                    </tr>
+                }
+                <tr>
+                    <td colspan="4" class="right-text">
+                        <input type="text" class="simple-textbox" value="SAVE: @ViewModel.Save2" readonly />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="free-section">
+                        <label class="form-label">Free</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <div class="free-items-container">
+                            <textarea class="free-items-upper" readonly>@ViewModel.FreeItemsUpperSection</textarea>
+                            <textarea class="free-items-lower" readonly>@ViewModel.FreeItemsLowerSection</textarea>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </table>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.InitializeAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    function handleFullScreen() {
+                        const elem = document.documentElement;
+                        if (elem.requestFullscreen) {
+                            elem.requestFullscreen();
+                        } else if (elem.webkitRequestFullscreen) {
+                            elem.webkitRequestFullscreen();
+                        } else if (elem.msRequestFullscreen) {
+                            elem.msRequestFullscreen();
+                        }
+                    }
+
+                    function handleFullScreenChange() {
+                        const appContainer = document.getElementById('app-container');
+                        if (document.fullscreenElement ||
+                            document.webkitFullscreenElement ||
+                            document.msFullscreenElement) {
+                            appContainer.style.width = '100vw';
+                            appContainer.style.height = '100vh';
+                        } else {
+                            appContainer.style.width = '';
+                            appContainer.style.height = '';
+                        }
+                    }
+
+                    document.addEventListener('fullscreenchange', handleFullScreenChange);
+                    document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
+                    document.addEventListener('msfullscreenchange', handleFullScreenChange);
+
+                    // Initialize full screen
+                    setTimeout(handleFullScreen, 100);
+                ");
+
+                await ViewModel.InitializeScreenSize();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing full screen: {ex.Message}");
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task UpdateScreenSize()
+    {
+        await ViewModel.InitializeScreenSize();
+    }
+}
